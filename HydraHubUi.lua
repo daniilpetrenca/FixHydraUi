@@ -1,5 +1,5 @@
--- Hydra Hub UI Library
--- Lightweight UI library for Roblox exploits
+-- Hydra Hub UI Library (Fixed Version)
+-- Lightweight UI library for Roblox exploits with horizontal tabs
 
 local Library = {}
 
@@ -43,8 +43,8 @@ function Library:CreateWindow(config)
     -- Main Frame
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2.new(0, 550, 0, 400)
-    mainFrame.Position = UDim2.new(0.5, -275, 0.5, -200)
+    mainFrame.Size = UDim2.new(0, 600, 0, 450)
+    mainFrame.Position = UDim2.new(0.5, -300, 0.5, -225)
     mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
@@ -99,10 +99,10 @@ function Library:CreateWindow(config)
         screenGui:Destroy()
     end)
     
-    -- Tab Container
+    -- Tab Container (Horizontal at top)
     local tabContainer = Instance.new("Frame")
     tabContainer.Name = "TabContainer"
-    tabContainer.Size = UDim2.new(0, 120, 1, -45)
+    tabContainer.Size = UDim2.new(1, -10, 0, 40)
     tabContainer.Position = UDim2.new(0, 5, 0, 40)
     tabContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     tabContainer.BorderSizePixel = 0
@@ -113,6 +113,7 @@ function Library:CreateWindow(config)
     tabCorner.Parent = tabContainer
     
     local tabLayout = Instance.new("UIListLayout")
+    tabLayout.FillDirection = Enum.FillDirection.Horizontal
     tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
     tabLayout.Padding = UDim.new(0, 5)
     tabLayout.Parent = tabContainer
@@ -121,13 +122,14 @@ function Library:CreateWindow(config)
     tabPadding.PaddingTop = UDim.new(0, 5)
     tabPadding.PaddingLeft = UDim.new(0, 5)
     tabPadding.PaddingRight = UDim.new(0, 5)
+    tabPadding.PaddingBottom = UDim.new(0, 5)
     tabPadding.Parent = tabContainer
     
     -- Content Container
     local contentContainer = Instance.new("Frame")
     contentContainer.Name = "ContentContainer"
-    contentContainer.Size = UDim2.new(1, -135, 1, -45)
-    contentContainer.Position = UDim2.new(0, 130, 0, 40)
+    contentContainer.Size = UDim2.new(1, -10, 1, -90)
+    contentContainer.Position = UDim2.new(0, 5, 0, 85)
     contentContainer.BackgroundTransparency = 1
     contentContainer.Parent = mainFrame
     
@@ -183,7 +185,7 @@ function Library:CreateWindow(config)
     function Window:CreateTab(name)
         local tabButton = Instance.new("TextButton")
         tabButton.Name = name
-        tabButton.Size = UDim2.new(1, 0, 0, 35)
+        tabButton.Size = UDim2.new(0, 100, 1, -10)
         tabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         tabButton.Text = name
         tabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -201,7 +203,7 @@ function Library:CreateWindow(config)
         tabContent.Size = UDim2.new(1, 0, 1, 0)
         tabContent.BackgroundTransparency = 1
         tabContent.BorderSizePixel = 0
-        tabContent.ScrollBarThickness = 4
+        tabContent.ScrollBarThickness = 6
         tabContent.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60)
         tabContent.Visible = false
         tabContent.Parent = self.ContentContainer
@@ -238,7 +240,7 @@ function Library:CreateWindow(config)
             end
             
             tabContent.Visible = true
-            tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            tabButton.BackgroundColor3 = Color3.fromRGB(50, 130, 50)
             tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
             self.CurrentTab = Tab
         end)
@@ -246,7 +248,7 @@ function Library:CreateWindow(config)
         -- Auto-select first tab
         if #self.Tabs == 0 then
             tabContent.Visible = true
-            tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            tabButton.BackgroundColor3 = Color3.fromRGB(50, 130, 50)
             tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
             self.CurrentTab = Tab
         end
@@ -376,7 +378,9 @@ function Library:CreateWindow(config)
                     colorTween:Play()
                     positionTween:Play()
                     
-                    callback(toggled)
+                    pcall(function()
+                        callback(toggled)
+                    end)
                 end)
                 
                 return toggleFrame
@@ -463,15 +467,25 @@ function Library:CreateWindow(config)
                     end
                 end)
                 
-                sliderButton.MouseMoved:Connect(function(x, y)
+                local function updateSlider(input)
                     if dragging then
-                        local pos = math.clamp((x - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+                        local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
                         local value = math.floor((range[1] + (range[2] - range[1]) * pos) / increment + 0.5) * increment
                         value = math.clamp(value, range[1], range[2])
                         
                         sliderFill.Size = UDim2.new(pos, 0, 1, 0)
                         valueLabel.Text = tostring(value)
-                        callback(value)
+                        
+                        pcall(function()
+                            callback(value)
+                        end)
+                    end
+                end
+                
+                sliderButton.MouseMoved:Connect(updateSlider)
+                UserInputService.InputChanged:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                        updateSlider(input)
                     end
                 end)
                 
@@ -519,7 +533,7 @@ function Library:CreateWindow(config)
                 arrow.Size = UDim2.new(0, 20, 0, 30)
                 arrow.Position = UDim2.new(1, -25, 0, 0)
                 arrow.BackgroundTransparency = 1
-                arrow.Text = "▼"
+                arrow.Text = "v"
                 arrow.TextColor3 = Color3.fromRGB(200, 200, 200)
                 arrow.TextSize = 12
                 arrow.Font = Enum.Font.Gotham
@@ -551,10 +565,13 @@ function Library:CreateWindow(config)
                     optionButton.MouseButton1Click:Connect(function()
                         currentOption = option
                         dropdownLabel.Text = name .. ": " .. option
-                        callback(option)
+                        
+                        pcall(function()
+                            callback(option)
+                        end)
                         
                         expanded = false
-                        arrow.Text = "▼"
+                        arrow.Text = "v"
                         dropdownFrame.Size = UDim2.new(1, 0, 0, 30)
                     end)
                 end
@@ -563,10 +580,10 @@ function Library:CreateWindow(config)
                     expanded = not expanded
                     
                     if expanded then
-                        arrow.Text = "▲"
+                        arrow.Text = "^"
                         dropdownFrame.Size = UDim2.new(1, 0, 0, 30 + (#options * 25))
                     else
-                        arrow.Text = "▼"
+                        arrow.Text = "v"
                         dropdownFrame.Size = UDim2.new(1, 0, 0, 30)
                     end
                 end)
@@ -596,7 +613,9 @@ function Library:CreateWindow(config)
                 buttonCorner.Parent = buttonFrame
                 
                 buttonFrame.MouseButton1Click:Connect(function()
-                    callback()
+                    pcall(function()
+                        callback()
+                    end)
                 end)
                 
                 return buttonFrame
@@ -624,8 +643,6 @@ function Library:CreateWindow(config)
                 inputLabel.Size = UDim2.new(1, -20, 0, 20)
                 inputLabel.Position = UDim2.new(0, 10, 0, 5)
                 inputLabel.BackgroundTransparency = 1
-                inputLabel.Text = name
-                inputLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
                 inputLabel.TextSize = 13
                 inputLabel.Font = Enum.Font.Gotham
                 inputLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -651,7 +668,9 @@ function Library:CreateWindow(config)
                 
                 textBox.FocusLost:Connect(function(enterPressed)
                     if enterPressed then
-                        callback(textBox.Text)
+                        pcall(function()
+                            callback(textBox.Text)
+                        end)
                     end
                 end)
                 
@@ -667,4 +686,6 @@ function Library:CreateWindow(config)
     return Window
 end
 
-return Library
+return Library = name
+                inputLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                inputLabel.Text
